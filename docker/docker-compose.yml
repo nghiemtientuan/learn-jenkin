@@ -1,0 +1,47 @@
+version: '3'
+services:
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: jenkins
+    restart: unless-stopped
+    tty: true
+    privileged: true
+    user: root
+    ports:
+      - 8080:8080
+      # Do not map the JNLP port for security reasons
+      # - 50000:50000
+    environment:
+      JAVA_OPTS: "-Djenkins.install.runSetupWizard=false"
+      JENKINS_LEADER_ADMIN_USER: "${JENKINS_LEADER_ADMIN_USER:-root}"
+      JENKINS_LEADER_ADMIN_PASSWORD: "${JENKINS_LEADER_ADMIN_PASSWORD:-root}"
+    volumes:
+      - jenkinHome:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /usr/local/bin/docker:/usr/local/bin/docker
+    networks:
+      - learn-jenkin-network
+
+  cli:
+    image: openjdk:9-jre-slim
+    container_name: jenkins-cli
+    environment:
+      JENKINS_LEADER_ADMIN_USER: "${JENKINS_LEADER_ADMIN_USER:-root}"
+      JENKINS_LEADER_ADMIN_PASSWORD: "${JENKINS_LEADER_ADMIN_PASSWORD:-root}"
+      JENKINS_URL: "http://jenkins:8080"
+    tty: true
+    volumes:
+      - jenkinCli:/cli:ro
+    working_dir: /cli
+    networks:
+      - learn-jenkin-network
+
+networks:
+  learn-jenkin-network:
+    driver: bridge
+
+volumes:
+  jenkinHome:
+    driver: local
+  jenkinCli:
+    driver: local
